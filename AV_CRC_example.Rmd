@@ -1,0 +1,286 @@
+---
+title: "AdapVal_CRC Example"
+author: "Lindsay Collin"
+date: "December 23, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(sas7bdat)
+library(binom)
+```
+
+```{r CRC validation data}
+dat<-read.sas7bdat("analysis_CRC.sas7bdat")
+```
+
+## Data Cleaning
+select only relevant variables
+Create new id variable
+Order study population by study time (min)
+order outcome by event time
+
+```{r cleaning}
+myvars<-c("OP_DATO", "d_recurrence","event","d_event","recidiv_coms","recidivdat_coms","recurrence")
+dat1<-dat[myvars]
+summary(dat1)
+table(dat1$recurrence, dat1$recidiv_coms)
+```
+```{r cleaning1}
+dat1$studytime<-dat1$OP_DATO-min(dat1$OP_DATO)
+dat1$rtime<-dat1$d_recurrence-min(dat1$OP_DATO)
+dat1$R<-ifelse(dat1$rtime>=0,1,NA)
+dat1$S<-1
+dat2<-dat1[with(dat1,order(studytime)),]
+dat2$S<-cumsum(dat2$S)
+dat3<-dat2[with(dat2,order(rtime)),]
+dat3$R<-cumsum(dat3$R)
+dat3$id<-1:nrow(dat3)
+```
+## Adaptive Validation--T1
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence (exclude)
+
+```{r Adap Val}
+dat3$T<-0
+set.seed(20191506)
+dat3 <-dat3[order(dat3$studytime),]
+dat3$R[is.na(dat3$R)]<-0
+dat4<- dat3 %>% filter(studytime<=rtime[R==5])
+
+#PPV
+samp1<-dat4 %>% filter(R %in% 1:5)
+table(samp1$recidiv_coms)
+#NPV
+samp2<-dat4 %>% filter(R==0)
+samp2<-samp2%>%sample_n(5, replace=FALSE)
+table(samp2$recidiv_coms)
+
+
+```
+## Adaptive Validation--T2
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r T2}
+#identify validation set in original dataset
+
+dat3$T<-ifelse(dat3$id %in% samp2$id,1,dat3$T)
+table(dat3$T)
+
+dat5<- dat3 %>% filter(studytime<=rtime[R==10])
+dat5<-subset(dat5, T==0)
+#PPV
+samp3<-dat5 %>% filter(R %in% 6:10)
+table(samp3$recidiv_coms)
+#NPV
+samp4<-dat5 %>% filter(R==0)
+samp4<-samp4%>%sample_n(5, replace=FALSE)
+table(samp4$recidiv_coms)
+
+```
+
+## Adaptive Validation--T3
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r T3}
+dat3$T<-ifelse(dat3$id %in% samp4$id,2,dat3$T)
+table(dat3$T)
+
+dat6<- dat3 %>% filter(studytime<=rtime[R==15])
+dat6<-subset(dat6, T==0)
+#PPV
+samp6<-dat6 %>% filter(R %in% 11:15)
+table(samp6$recidiv_coms)
+#NPV
+samp7<-dat6 %>% filter(R==0)
+samp7<-samp7%>%sample_n(5, replace=FALSE)
+table(samp7$recidiv_coms)
+```
+## Adaptive Validation--T4
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+
+```{r T4}
+dat3$T<-ifelse(dat3$id %in% samp7$id,3,dat3$T)
+table(dat3$T)
+dat7<- dat3 %>% filter(studytime<=rtime[R==20])
+dat7<-subset(dat7, T==0)
+#PPV
+samp8<-dat7 %>% filter(R %in% 16:20)
+table(samp8$recidiv_coms)
+#NPV
+samp9<-dat7 %>% filter(R==0)
+samp9<-samp9%>%sample_n(5, replace=FALSE)
+table(samp9$recidiv_coms)
+```
+
+## Adaptive Validation--T5
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r T5}
+dat3$T<-ifelse(dat3$id %in% samp9$id,4,dat3$T)
+table(dat3$T)
+dat8<- dat3 %>% filter(studytime<=rtime[R==25])
+dat8<-subset(dat8, T==0)
+#PPV
+samp10<-dat8 %>% filter(R %in% 21:25)
+table(samp10$recidiv_coms)
+#NPV
+samp11<-dat8 %>% filter(R==0)
+samp11<-samp11%>%sample_n(5, replace=FALSE)
+table(samp11$recidiv_coms)
+```
+## Adaptive Validation--T6
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r T6}
+dat3$T<-ifelse(dat3$id %in% samp11$id,5,dat3$T)
+table(dat3$T)
+dat9<- dat3 %>% filter(studytime<=rtime[R==30])
+dat9<-subset(dat9, T==0)
+#PPV
+samp12<-dat9 %>% filter(R %in% 26:30)
+table(samp12$recidiv_coms)
+#NPV
+samp13<-dat9 %>% filter(R==0)
+samp13<-samp13%>%sample_n(5, replace=FALSE)
+table(samp13$recidiv_coms)
+
+```
+
+## Adaptive Validation--T7
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp13$id,6,dat3$T)
+table(dat3$T)
+dat10<- dat3 %>% filter(studytime<=rtime[R==35])
+dat10<-subset(dat10, T==0)
+#PPV
+samp14<-dat10 %>% filter(R %in% 31:35)
+table(samp14$recidiv_coms)
+#NPV
+samp15<-dat10 %>% filter(R==0)
+samp15<-samp15%>%sample_n(5, replace=FALSE)
+table(samp15$recidiv_coms)
+
+```
+## Adaptive Validation--T8
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp15$id,7,dat3$T)
+table(dat3$T)
+dat11<- dat3 %>% filter(studytime<=rtime[R==40])
+dat11<-subset(dat11, T==0)
+#PPV
+samp16<-dat11 %>% filter(R %in% 36:40)
+table(samp16$recidiv_coms)
+#NPV
+samp17<-dat11 %>% filter(R==0)
+samp17<-samp17%>%sample_n(5, replace=FALSE)
+table(samp17$recidiv_coms)
+```
+## Adaptive Validation--T9
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp17$id,8,dat3$T)
+table(dat3$T)
+dat12<- dat3 %>% filter(studytime<=rtime[R==45])
+dat12<-subset(dat12, T==0)
+#PPV
+samp18<-dat12 %>% filter(R %in% 41:45)
+table(samp18$recidiv_coms)
+#NPV
+samp19<-dat12 %>% filter(R==0)
+samp19<-samp19%>%sample_n(5, replace=FALSE)
+table(samp19$recidiv_coms)
+```
+## Adaptive Validation--T10
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp19$id,9,dat3$T)
+table(dat3$T)
+dat13<- dat3 %>% filter(studytime<=rtime[R==50])
+dat13<-subset(dat13, T==0)
+#PPV
+samp20<-dat13 %>% filter(R %in% 46:50)
+table(samp20$recidiv_coms)
+#NPV
+samp21<-dat13 %>% filter(R==0)
+samp21<-samp21%>%sample_n(5, replace=FALSE)
+table(samp21$recidiv_coms)
+```
+## Adaptive Validation--T11
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp21$id,10,dat3$T)
+table(dat3$T)
+dat14<- dat3 %>% filter(studytime<=rtime[R==55])
+dat14<-subset(dat14, T==0)
+#PPV
+samp22<-dat14 %>% filter(R %in% 51:55)
+table(samp22$recidiv_coms)
+#NPV
+samp23<-dat14 %>% filter(R==0)
+samp23<-samp23%>%sample_n(5, replace=FALSE)
+table(samp23$recidiv_coms)
+```
+
+## Adaptive Validation--T12
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp23$id,11,dat3$T)
+table(dat3$T)
+dat15<- dat3 %>% filter(studytime<=rtime[R==60])
+dat15<-subset(dat15, T==0)
+#PPV
+samp24<-dat15 %>% filter(R %in% 56:60)
+table(samp24$recidiv_coms)
+#NPV
+samp25<-dat15 %>% filter(R==0)
+samp25<-samp25%>%sample_n(5, replace=FALSE)
+table(samp25$recidiv_coms)
+```
+
+## Adaptive Validation--T12
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp25$id,12,dat3$T)
+table(dat3$T)
+dat16<- dat3 %>% filter(studytime<=rtime[R==65])
+dat16<-subset(dat16, T==0)
+#PPV
+samp26<-dat16 %>% filter(R %in% 61:65)
+table(samp26$recidiv_coms)
+#NPV
+samp27<-dat16 %>% filter(R==0)
+samp27<-samp27%>%sample_n(5, replace=FALSE)
+table(samp27$recidiv_coms)
+```
+## Adaptive Validation--T13
+Create indicator for if someone has been validated (set to 0)
+subset after first 5 cases, make note of those who may go on to develop Recurrence
+
+```{r}
+dat3$T<-ifelse(dat3$id %in% samp27$id,13,dat3$T)
+table(dat3$T)
+dat17<- dat3 %>% filter(studytime<=rtime[R==70])
+dat17<-subset(dat17, T==0)
+#PPV
+samp28<-dat17 %>% filter(R %in% 66:70)
+table(samp28$recidiv_coms)
+#NPV
+samp29<-dat17 %>% filter(R==0)
+samp29<-samp29%>%sample_n(5, replace=FALSE)
+table(samp29$recidiv_coms)
+```
+
