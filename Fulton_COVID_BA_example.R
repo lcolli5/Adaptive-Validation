@@ -25,6 +25,7 @@ library(matrixStats)
 #######---------------------------------BISG-----------------------------###
 
 #load Georgia/Fulton Data (not shown)
+#ACS 2018 5-year estimates were used to generate population distribution for census block groups
 #block information (subset those with geocoding data)
 
 Fulton_BISG_short2_G<-Fulton_BISG_short2 %>% filter(block!="NA") #19091
@@ -84,7 +85,7 @@ R_H<-1617
 R_O<-515
 R_W<-3152
 
-#ACS denominators
+#ACS denominators (derived from ACS 5-year estimates, not shown)
 
 d_A<-69987
 d_H<- 74328
@@ -175,7 +176,7 @@ colQuantiles(PPV_W,probs=probs)
 
 
 
-#Bias-adjustement, probabilitistically move imputed counts to expected truth
+#Bias-adjustment, probabilistically move imputed counts to expected truth
 A<-r_A*PPV_A[,1]+PPV_B[,1]*r_B+r_H*PPV_H[,1]+PPV_O[,1]*r_O+PPV_W[,1]*r_W
 B<-r_A*PPV_A[,2]+PPV_B[,2]*r_B+r_H*PPV_H[,2]+PPV_O[,2]*r_O+PPV_W[,2]*r_W
 H<-r_A*PPV_A[,3]+PPV_B[,3]*r_B+r_H*PPV_H[,3]+PPV_O[,3]*r_O+PPV_W[,3]*r_W
@@ -190,7 +191,7 @@ R_H1<-R_H+H
 R_O1<-R_O+O
 R_W1<-R_W+W
 
-#take quantiles of the counts (incorporates uncertainity)
+#take quantiles of the counts 
 quantile(R_A1,c(0.025,0.50,0.975))
 quantile(R_B1,c(0.025,0.50,0.975))
 quantile(R_H1,c(0.025,0.50,0.975))
